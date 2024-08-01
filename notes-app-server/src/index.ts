@@ -34,35 +34,37 @@ app.post("/api/notes", async (req, res) => {
     }
     
 });
-
-app.put("/api/notes/:id", async (req,res) =>{
-    const {title, content} = req.body;
+app.put("/api/notes/:id", async (req, res) => {
+    const { title, content } = req.body;
     const id = parseInt(req.params.id);
-
-    if(!title || !content){
-        return res
-        .status(400)
-        .send("title and content fields required");
+  
+    if (!title || !content) {
+      return res.status(400).send("Title and content fields are required");
     }
-
-    if (!id || isNaN(id)){
-        return res
-        .status(400)
-        .send("ID must be a valid number");
+  
+    if (isNaN(id)) {
+      return res.status(400).send("ID must be a valid number");
     }
+  
     try {
-        const updatedNote = 
-            await prisma.note.update({
-                where: { id },
-                data: {title, content}
-            })
-            res.json(updatedNote)
+      // Check if the note exists
+      const existingNote = await prisma.note.findUnique({ where: { id } });
+      if (!existingNote) {
+        return res.status(404).send("Note not found");
+      }
+  
+      const updatedNote = await prisma.note.update({
+        where: { id },
+        data: { title, content },
+      });
+  
+      res.json(updatedNote);
     } catch (error) {
-        res
-        .status(500)
-        .send("Oops, something went wrong")
+      console.error("Error updating note:", error);
+      res.status(500).send("Oops, something went wrong");
     }
-});
+  });
+  
 
 app.delete("/api/notes/:id", async (req,res) =>{
     const id = parseInt(req.params.id);
